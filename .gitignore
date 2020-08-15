@@ -3,3 +3,6 @@
 
 # Rstudio files
 .Rproj.user/
+
+# files on jhpce
+log/

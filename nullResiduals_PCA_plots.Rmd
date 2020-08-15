@@ -1,0 +1,51 @@
+---
+title: "Benchmarking scry methods with DelayedArray backends"
+author: "Stephanie Hicks"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  BiocStyle::html_document:
+    toc: false
+<!-- vignette: > -->
+<!--   %\VignetteEngine{knitr::knitr} -->
+<!--   %\VignetteIndexEntry{Benchmarking scry methods with DelayedArray backends} -->
+<!--   %\usepackage[UTF-8]{inputenc} -->
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Make sure you have latest version (needs glmpca >= 0.2.0)
+```{r, eval=FALSE}
+remotes::install_github("willtownes/glmpca")
+remotes::install_github("kstreet13/scry@hdf5") # install HDF5 branch
+```
+
+
+```{r}
+suppressPackageStartupMessages({
+  library(SingleCellExperiment)
+  library(DelayedArray)
+  library(BiocSingular)
+  library(scry)
+  library(here)
+  library(ggplot2)
+})
+```
+
+
+
+```{r}
+dat <- data.frame("ns" = ns[-8], 
+                  # "inmem" = time_realized[,3]/60, 
+                  "ondisk" = time_da[-8,3]/60)
+dat <- tidyr::pivot_longer(dat, -ns, names_to = "type", values_to = "time")
+readr::write_csv(dat, here::here())
+
+ggplot(dat, aes(x=ns, y = time, color = type)) + 
+  geom_point() + geom_line() + 
+  xlab("Number of observations") + 
+  ylab("Elapsed time")
+
+```
+

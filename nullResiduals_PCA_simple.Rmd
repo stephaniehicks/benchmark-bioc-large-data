@@ -24,9 +24,11 @@ remotes::install_github("kstreet13/scry@hdf5") # install HDF5 branch
 
 ```{r}
 suppressPackageStartupMessages({
+  library(here)
   library(SingleCellExperiment)
   library(DelayedArray)
   library(BiocSingular)
+  library(BiocParallel)
   library(scry)
 })
 ```
@@ -74,8 +76,8 @@ Here, we run the in-memory, vectorized `nullResiduals()` function:
 time_start <- proc.time()
 tenx_realized <- nullResiduals(tenx_realized, assay="counts",
                                fam = "poisson", type="deviance")
-pcs.out <- runPCA(assay(tenx_realized, "poisson_deviance_residuals"), 
-                  rank=10, BSPARAM=IrlbaParam())
+pcs_out <- runPCA(assay(tenx_realized, "poisson_deviance_residuals"), 
+              rank=10, BSPARAM=FastAutoParam(), get.rotation=FALSE)
 time_end <- proc.time()
 time_inmem_vec <- time_end - time_start
 time_inmem_vec
@@ -85,15 +87,15 @@ Next, we try the `nullResiduals()` function using on-disk data (`DelayedArray`).
 The `nullResiduals()` function that uses `BiocSingular::LowRankMatrix`. 
 ```{r}
 time_start <- proc.time()
-tmp <- nullResiduals(tenx, assay="counts", 
+tenx <- nullResiduals(tenx, assay="counts", 
                      fam = "poisson", type="deviance")
-pcs.out <- runPCA(assay(tmp, "poisson_deviance_residuals"), 
-                  rank=10, BSPARAM=IrlbaParam())
+pcs_out <- runPCA(assay(tenx, "poisson_deviance_residuals"), 
+                  rank=10, BSPARAM=FastAutoParam(), get.rotation=FALSE)
 time_end <- proc.time()
 time_da_lrm <- time_end - time_start
 time_da_lrm
 
-str(pcs.out)
+str(pcs_out)
 ```
 
 Compare the times 
@@ -113,41 +115,73 @@ time_da_lrm
 
 # Larger benchmark
 
+Create a general function to use for benchmarking
 ```{r}
-library(BiocParallel)
-multicoreParam <- MulticoreParam(workers = 1)
-bpparam()
-```
-
-```{r}
-tenx <- TENxBrainData()
-tenx <- tenx[,1:1000] # start with a small subset for testing while building benchmark code
-
-tenx_realized <- tenx
-assay(tenx_realized, "counts") <- as.matrix(assay(tenx, "counts"))
-assay(tenx_realized, "counts")[1:5, 1:5]
-dim(tenx_realized)
-```
-
-Create two functions
-```{r}
-null_realized <- function(object, assay, fam, type, rank){
+null_pca <- function(object, assay, fam, type, rank, workers){
     .id <- paste(fam, type, "residuals", sep="_")
     if(.id %in% reducedDimNames(object)){
       assay(object, .id) <- NULL 
     }
 
     object <- nullResiduals(object, assay=assay,
-                                  fam = fam, type=type)
-    assays(object, "PCA", withDimnames = TRUE) <- 
-      runPCA(assay(object, .id), rank=rank, BSPARAM=IrlbaParam())
-    object
+                            fam = fam, type=type)
+    pcs_out <- runPCA(assay(object, .id), rank = rank, 
+                     BSPARAM = FastAutoParam(), get.rotation = FALSE,
+                     BPPARAM = MulticoreParam(workers = workers))
+    pcs_out
 }
+```
 
-tmp <- null_realized(tenx_realized, assay= "counts", 
-                fam = "poisson", type = "deviance", rank=10)
-dim(reducedDim(object, "PCA"))
+Number of observations
+```{r}
+ns <- c(100, 1000, 5000, 10000, 25000, 50000, 75000, 100000)
+```
 
+Benchmark for in-memory data (includes time to load data from disk)
+```{r}
+time_realized <- matrix(nrow=length(ns), ncol=5)
+for(i in seq_along(ns)){
+  tenx <- TENxBrainData()[,seq_len(ns[i])]
+  tenx_realized <- tenx
+  
+  time_start <- proc.time()
+  tenx_realized <- tenx
+  assay(tenx_realized, "counts") <- as.matrix(assay(tenx, "counts"))
+  tmp <- null_realized(tenx_realized, assay= "counts", fam = "poisson",
+                       type = "deviance", rank=10, workers = 8)
+
+  time_end <- proc.time()
+  time_realized[i,] <- c(time_end - time_start)
+}
+time_realized
+
+time_realized_dat <- data.frame(time_realized[,1:3])
+colnames(time_realized_dat) <- c("user", "system", "elapsed")
+readr::write_csv(time_realized_dat, 
+                 path = here::here("data_timing", "time_realized.csv"))
+```
+
+
+Benchmark for on-disk data (`DelayedArray`) (does not include time to load data from disk)
+```{r}
+time_da <- matrix(nrow=length(ns), ncol=5)
+for(i in seq_along(ns)){
+  tenx <- TENxBrainData()[,seq_len(ns[i])]
+  
+  time_start <- proc.time()
+  tmp <- null_realized(tenx, assay= "counts", fam = "poisson",
+                       type = "deviance", rank=10, workers = 8)
+
+  time_end <- proc.time()
+  time_da[i,] <- c(time_end - time_start)
+  Sys.time()
+}
+time_da
+
+time_dat <- data.frame(time_da[,1:3])
+colnames(time_dat) <- c("user", "system", "elapsed")
+readr::write_csv(time_dat, 
+                 path = here::here("data_timing", "time_da.csv"))
 ```
 
 
