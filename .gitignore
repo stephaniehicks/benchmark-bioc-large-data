@@ -13,3 +13,6 @@ output_mem/
 
 # do not track figures (for now)
 figures/
+
+# ignore html files
+*.html

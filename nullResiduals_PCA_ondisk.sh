@@ -14,6 +14,6 @@ data_type="ondisk"
 fam="poisson"
 model_type="pearson"
 num_workers=1
-mode="time"
+mode="mem"
 
 Rscript --slave nullResiduals_PCA.R --args $run_id $data_name $data_type $fam $model_type $num_workers $mode

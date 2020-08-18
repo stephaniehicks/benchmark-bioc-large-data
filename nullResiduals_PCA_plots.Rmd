@@ -1,14 +1,14 @@
 ---
-title: "Benchmarking scry methods with DelayedArray backends"
-author: "Stephanie Hicks"
+title: Benchmarking scry methods with DelayedArray backends
+author: Stephanie Hicks
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: 
-  BiocStyle::html_document:
-    toc: false
-<!-- vignette: > -->
-<!--   %\VignetteEngine{knitr::knitr} -->
-<!--   %\VignetteIndexEntry{Benchmarking scry methods with DelayedArray backends} -->
-<!--   %\usepackage[UTF-8]{inputenc} -->
+output:
+  html_document:
+    md_extensions: -startnum
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
 ---
 
 ```{r setup, include=FALSE}
@@ -34,7 +34,7 @@ if(!file.exists(here("figures"))){
 
 # Time
 
-```{r}
+```{r, message=FALSE}
 my_files <- list.files(here("output_time"))
 
 time_table <- NULL
@@ -42,23 +42,27 @@ for (i in (1:length(my_files))){
   tmp_table <- read_csv(here("output_time", my_files[i]))
   time_table <- rbind(time_table, tmp_table)
 }
+
 time_table
 ```
 
 ```{r}
-time_table <- tidyr::pivot_longer(time_table, c(null, pca), names_to = "phases", values_to = "time")
+time_table <- 
+  pivot_longer(time_table, c(null, pca), 
+               names_to = "phases", values_to = "time")
+
 time_table
 ```
 
 
-```{r}
+```{r, fig.width=8, fig.height=4}
 p1 <- time_table %>% 
   unite(fam_model_type, fam:model_type, sep="_") %>%
-  ggplot(aes(x = n_obs, y = time/60, color = data_type)) + 
+  ggplot(aes(x = n_obs, y = time/60, color = data_type, linetype = fam_model_type)) + 
   geom_line() + 
   geom_point() +
-  scale_y_log10() + 
-  facet_grid(fam_model_type ~ phases) + 
+  scale_y_continuous(trans = "log10", labels = scales::number) + 
+  facet_grid( ~ phases) + 
   xlab("number of cells") + 
   ylab("time (mins)") 
 p1
@@ -70,7 +74,38 @@ print(p1)
 dev.off()
 ```
 
+
+
+
 ## Notes 
+
+### in-memory vs on-disk
+
+I could not get in-memory datasets larger than 75,000 observations to run. 
+This is because it required so much memory (see the Memory section below for more details on this). 
+
+### Pearson vs Deviance
+
+From a timing perspective, using Pearson residuals seems to be faster than deviance residuals 
+
+
+### runPCA() 
+
+**Clearly** the step that takes the longest is the `runPCA()` step. 
+This is particularly true for the on-disk data representation case. 
+For example, if we look at the `poisson_deviance` for on-disk data representation case in `runPCA()`, the 75K and 100K observation takes 5.4 and 6.5 hours, respectively. 
+I print the times here for clarity. 
+```{r}
+time_table %>% 
+  unite(fam_model_type, fam:model_type, sep="_") %>%
+  filter(data_type == "ondisk", phases == "pca",
+         fam_model_type == "poisson_deviance") %>%
+  mutate(round(time/3600,2)) %>%
+  pull() 
+```
+
+
+### Not working yet
 
 For `binomial_deviance`, I kept getting this error in the `runPCA()` step. So it's not included here. 
 
@@ -86,7 +121,7 @@ Execution halted
 
 # Memory 
 
-```{r}
+```{r, message=FALSE}
 my_files <- list.files(here("output_mem"))
 
 mem_table <- NULL
@@ -102,12 +137,11 @@ mem_table
 ```{r}
 p1 <- mem_table %>% 
   unite(fam_model_type, fam:model_type, sep="_") %>%
-  ggplot(aes(x = n_obs, y = max_mem, color = data_type)) + 
+  ggplot(aes(x = n_obs, y = max_mem, color = data_type, linetype = fam_model_type)) + 
   geom_line() +
   geom_point() + 
   scale_y_log10() + 
-  facet_grid(fam_model_type ~ .) + 
-  ylab("max_mem (GB)") + 
+  ylab("Max memory (RAM) used (GB)") + 
   ggtitle(label="Memory usage for nullResiduals() and runPCA() combined")
 p1
 ```
@@ -117,4 +151,21 @@ pdf(here("figures", "mem.pdf"), width = 6, height = 5)
 print(p1)
 dev.off()
 ```
+
+## Notes 
+
+### in-memory vs on-disk
+
+This was really cool to see: such a small amount of memory used for on-disk data representation. 
+
+However, again, I could not get in-memory datasets larger than 75,000 observations to run. 
+This is because it required so much memory. 
+I only tried up to 100,000 observations for on-disk, but this is easy to scale up.
+However, the `runPCA()` step takes a **long time** (see above in the timing).  
+
+### Pearson vs Deviance
+
+From a memory perspective, using Pearson residuals seems to use letter memory than deviance residuals 
+
+
 
