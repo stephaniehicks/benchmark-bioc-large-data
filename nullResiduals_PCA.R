@@ -11,8 +11,16 @@ mode <- args[8]
 .id <- paste(fam, model_type, "residuals", sep="_")
 
 # Number of observations
-n_obs <- c(100, 1000, 5000, 10000, 25000, 50000, 75000, 100000)
-# n_obs <- c(1000, 5000)
+if(data_type == "inmem"){
+  n_obs <- c(100, 1000, 5000, 10000, 25000, 50000, 75000)
+} 
+if(data_type == "ondisk"){
+  n_obs <- c(100, 1000, 5000, 10000, 25000, 50000, 75000, 100000)
+}
+
+# ## Make sure you have latest version (needs glmpca >= 0.2.0)
+# remotes::install_github("willtownes/glmpca")
+# remotes::install_github("kstreet13/scry@hdf5") # install HDF5 branch
 
 suppressPackageStartupMessages({
   library(here)

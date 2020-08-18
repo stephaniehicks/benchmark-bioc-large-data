@@ -7,6 +7,9 @@
 # files on jhpce
 log/
 
-# track output files
+# track output files (for now) 
 output_time/
 output_mem/
+
+# do not track figures (for now)
+figures/

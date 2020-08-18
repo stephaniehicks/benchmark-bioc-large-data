@@ -12,8 +12,8 @@ run_id="stephanie_cluster"
 data_name="tenxbraindata"
 data_type="inmem"
 fam="poisson"
-model_type="deviance"
+model_type="pearson"
 num_workers=1
-mode="mem"
+mode="time"
 
 Rscript --slave nullResiduals_PCA.R --args $run_id $data_name $data_type $fam $model_type $num_workers $mode

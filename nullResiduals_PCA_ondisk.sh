@@ -1,6 +1,6 @@
 # -pe local 1
 # -l mem_free=10G,h_vmem=12G
-#$ -l mem_free=50G,h_vmem=60G
+#$ -l mem_free=10G,h_vmem=12G
 #$ -cwd
 #$ -o log/
 #$ -e log/
@@ -12,8 +12,8 @@ run_id="stephanie_cluster"
 data_name="tenxbraindata"
 data_type="ondisk"
 fam="poisson"
-model_type="deviance"
+model_type="pearson"
 num_workers=1
-mode="mem"
+mode="time"
 
 Rscript --slave nullResiduals_PCA.R --args $run_id $data_name $data_type $fam $model_type $num_workers $mode

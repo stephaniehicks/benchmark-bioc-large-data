@@ -25,6 +25,13 @@ suppressPackageStartupMessages({
 })
 ```
 
+```{r}
+if(!file.exists(here("figures"))){
+  dir.create(here("figures"))
+}
+```
+
+
 # Time
 
 ```{r}
@@ -45,13 +52,35 @@ time_table
 
 
 ```{r}
-time_table %>% 
+p1 <- time_table %>% 
+  unite(fam_model_type, fam:model_type, sep="_") %>%
   ggplot(aes(x = n_obs, y = time/60, color = data_type)) + 
   geom_line() + 
   geom_point() +
   scale_y_log10() + 
-  facet_wrap(~phases) + 
-  ylab("time (mins)")
+  facet_grid(fam_model_type ~ phases) + 
+  xlab("number of cells") + 
+  ylab("time (mins)") 
+p1
+```
+
+```{r}
+pdf(here("figures", "time.pdf"), width = 8, height = 4)
+print(p1)
+dev.off()
+```
+
+## Notes 
+
+For `binomial_deviance`, I kept getting this error in the `runPCA()` step. So it's not included here. 
+
+```
+Error in if (tol * ans$d[1] < eps) warning("convergence criterion below machine epsilon") : 
+  missing value where TRUE/FALSE needed
+Calls: runPCA ... runSVD -> do.call -> <Anonymous> -> do.call -> <Anonymous>
+In addition: Warning message:
+In sqrt(2 * (term1 + term2)) : NaNs produced
+Execution halted
 ```
 
 
@@ -71,12 +100,21 @@ mem_table
 
 
 ```{r}
-mem_table %>% 
+p1 <- mem_table %>% 
+  unite(fam_model_type, fam:model_type, sep="_") %>%
   ggplot(aes(x = n_obs, y = max_mem, color = data_type)) + 
   geom_line() +
   geom_point() + 
   scale_y_log10() + 
-  ylab("max_mem (GB)")
+  facet_grid(fam_model_type ~ .) + 
+  ylab("max_mem (GB)") + 
+  ggtitle(label="Memory usage for nullResiduals() and runPCA() combined")
+p1
 ```
 
+```{r}
+pdf(here("figures", "mem.pdf"), width = 6, height = 5)
+print(p1)
+dev.off()
+```
 
