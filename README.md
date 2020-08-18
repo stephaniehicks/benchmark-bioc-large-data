@@ -42,6 +42,28 @@ remotes::install_github("willtownes/glmpca")
 remotes::install_github("kstreet13/scry@hdf5") # install HDF5 branch
 ```
 
+## Usage
+
+To run a bash script (`.sh`) you need to open the file and change the following arguments
+
+- `run_id="stephanie_cluster"` (this is the only option at the moment and mostly used to keep track of where the files were run)
+- `data_name="tenxbraindata"` (this is the only option at the moment)
+- `data_type="inmem"` or `data_type="ondisk"`
+- `fam="poisson"` or `fam="binomial"`
+- `model_type="pearson"` or `model_type="deviance"`
+- `num_workers=1` (number of cores used for runPCA)
+- `mode="mem"` or `mode="time"`
+
+To run the bash scripts on my cluster (JHPCE), 
+
+```
+qsub nullResiduals_PCA_inmem.sh
+qsub nullResiduals_PCA_ondisk.sh
+```
+
+This calls the [`nullResiduals_PCA.R`](nullResiduals_PCA.R) file
+
+
 ## Authors
 
 - [Stephanie Hicks](https://www.stephaniehicks.com), https://github.com/stephaniehicks, Johns Hopkins Bloomberg School of Public Health, USA
