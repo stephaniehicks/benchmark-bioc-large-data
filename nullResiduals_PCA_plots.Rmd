@@ -15,6 +15,42 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+suppressPackageStartupMessages({
+  library(here)
+  library(readr)
+  library(ggplot2)
+  library(dplyr)
+  library(tidyr)
+})
+```
+
+
+```{r}
+my_files <- list.files(here("output_time"))
+
+time_table <- NULL
+for (i in (1:length(my_files))){
+  tmp_table <- read_csv(here("output_time", my_files[i]))
+  time_table <- rbind(time_table, tmp_table)
+}
+time_table
+```
+
+```{r}
+time_table <- tidyr::pivot_longer(time_table, c(null, pca), names_to = "phases", values_to = "time")
+time_table
+```
+
+
+```{r}
+time_table %>% 
+  ggplot(aes(x = n_obs, y = time, color = phases, linetype = data_type)) + 
+  geom_line() + scale_y_log10()
+```
+
+
+
 Make sure you have latest version (needs glmpca >= 0.2.0)
 ```{r, eval=FALSE}
 remotes::install_github("willtownes/glmpca")

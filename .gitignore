@@ -6,3 +6,7 @@
 
 # files on jhpce
 log/
+
+# track output files
+output_time/
+output_mem/
