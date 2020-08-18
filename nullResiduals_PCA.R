@@ -11,7 +11,7 @@ mode <- args[8]
 .id <- paste(fam, model_type, "residuals", sep="_")
 
 # Number of observations
-n_obs <- c(100, 1000, 5000, 10000, 25000, 50000, 75000)
+n_obs <- c(100, 1000, 5000, 10000, 25000, 50000, 75000, 100000)
 # n_obs <- c(1000, 5000)
 
 suppressPackageStartupMessages({

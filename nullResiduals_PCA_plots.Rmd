@@ -25,6 +25,7 @@ suppressPackageStartupMessages({
 })
 ```
 
+# Time
 
 ```{r}
 my_files <- list.files(here("output_time"))
@@ -45,43 +46,37 @@ time_table
 
 ```{r}
 time_table %>% 
-  ggplot(aes(x = n_obs, y = time, color = phases, linetype = data_type)) + 
-  geom_line() + scale_y_log10()
+  ggplot(aes(x = n_obs, y = time/60, color = data_type)) + 
+  geom_line() + 
+  geom_point() +
+  scale_y_log10() + 
+  facet_wrap(~phases) + 
+  ylab("time (mins)")
 ```
 
 
-
-Make sure you have latest version (needs glmpca >= 0.2.0)
-```{r, eval=FALSE}
-remotes::install_github("willtownes/glmpca")
-remotes::install_github("kstreet13/scry@hdf5") # install HDF5 branch
-```
-
+# Memory 
 
 ```{r}
-suppressPackageStartupMessages({
-  library(SingleCellExperiment)
-  library(DelayedArray)
-  library(BiocSingular)
-  library(scry)
-  library(here)
-  library(ggplot2)
-})
+my_files <- list.files(here("output_mem"))
+
+mem_table <- NULL
+for (i in (1:length(my_files))){
+  tmp_table <- read_csv(here("output_mem", my_files[i]))
+  mem_table <- rbind(mem_table, tmp_table)
+}
+mem_table
 ```
 
 
 
 ```{r}
-dat <- data.frame("ns" = ns[-8], 
-                  # "inmem" = time_realized[,3]/60, 
-                  "ondisk" = time_da[-8,3]/60)
-dat <- tidyr::pivot_longer(dat, -ns, names_to = "type", values_to = "time")
-readr::write_csv(dat, here::here())
-
-ggplot(dat, aes(x=ns, y = time, color = type)) + 
-  geom_point() + geom_line() + 
-  xlab("Number of observations") + 
-  ylab("Elapsed time")
-
+mem_table %>% 
+  ggplot(aes(x = n_obs, y = max_mem, color = data_type)) + 
+  geom_line() +
+  geom_point() + 
+  scale_y_log10() + 
+  ylab("max_mem (GB)")
 ```
+
 

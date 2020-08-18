@@ -1,6 +1,6 @@
 # -pe local 1
 # -l mem_free=10G,h_vmem=12G
-#$ -l mem_free=10G,h_vmem=12G
+#$ -l mem_free=50G,h_vmem=60G
 #$ -cwd
 #$ -o log/
 #$ -e log/
