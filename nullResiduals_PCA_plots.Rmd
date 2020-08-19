@@ -117,6 +117,19 @@ In addition: Warning message:
 In sqrt(2 * (term1 + term2)) : NaNs produced
 Execution halted
 ```
+and 
+
+```
+Error in qr.default(Y, complete = FALSE) : 
+  NA/NaN/Inf in foreign function call (arg 1)
+Calls: runPCA ... rsvd.default -> qr.Q -> is.qr -> qr -> qr.default -> .Fortran
+In addition: Warning messages:
+1: In match.fun(.Generic)(a) : NaNs produced
+2: In match.fun(.Generic)(a) : NaNs produced
+3: In match.fun(.Generic)(a) : NaNs produced
+4: In match.fun(.Generic)(a) : NaNs produced
+Execution halted
+```
 
 
 # Memory 
